@@ -6,6 +6,31 @@ from utils.app_utils import wiki_search, get_sections, get_article_image, get_tr
 from utils.localization import load_translations, set_language, _
 
 
+def get_merged_knowledge(query, target_language):
+    with st.spinner(_("Getting the German Wikipedia articles ...")):
+        translated_query = get_translation(query, 'de')
+        print("Searching German Wikipedia for ", translated_query)
+        german_wiki_page = wiki_search(query, target_language='de')
+    st.success(_("German Wikipedia articles retrieved."))
+    with st.spinner(_("Getting the French Wikipedia articles ...")):
+        print("Searching French Wikipedia for ", query)
+        french_wiki_page = wiki_search(query, target_language='fr')
+        st.success(_("French Wikipedia articles retrieved."))
+    with st.spinner(_("Getting the Spanish Wikipedia articles ...")):
+        print("Searching Spanish Wikipedia for ", query)
+        spanish_wiki_page = wiki_search(query, target_language='es')
+    st.success(_("Spanish Wikipedia articles retrieved."))
+    with st.spinner(_("Getting the Italian Wikipedia articles ...")):
+        print("Searching Italian Wikipedia for ", query)
+        italian_wiki_page = wiki_search(query, target_language='it')
+    st.success(_("Italian Wikipedia articles retrieved."))
+    with st.spinner(_("Getting the English Wikipedia articles ...")):
+        print("Searching English Wikipedia for ", query)
+        english_wiki_page = wiki_search(query, target_language='en')
+    st.success(_("English Wikipedia articles retrieved."))
+
+
+
 translations = load_translations('locales')
 
 if not 'target_language' in st.session_state:
@@ -121,9 +146,12 @@ if query and st_button:
         query = get_translation(query, 'en')
         st.session_state['trans_query'] = query
 
-    with st.spinner(_("Getting Wikipedia article ...")):
-        print("Searching Wikipedia for ", query)
-        wiki_page = wiki_search(query)
+    if merge_knowledge:
+        wiki_page = get_merged_knowledge(query, target_language)
+    else:
+        with st.spinner(_("Getting Wikipedia article ...")):
+            print("Searching Wikipedia for ", query)
+            wiki_page = wiki_search(query)
 
     st.session_state['wiki_page'] = wiki_page
     st.session_state['read_to_section'] = 1
@@ -145,7 +173,7 @@ if wiki_page and isinstance(wiki_page, wiki_utils.WikipediaPage):
         st.header(f"{original_query} => {trans_query}")
     else:
         st.header(query)
-
+    st.write(f"[Wikipedia]({wiki_page.url})")
     extract = wiki_page.extract
     infobox = wiki_page.infobox
 
