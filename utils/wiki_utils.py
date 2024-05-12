@@ -182,7 +182,6 @@ def _wiki_request(params):
 
 @cache
 def get_image_url(filename):
-    url = "https://en.wikipedia.org/w/api.php"
     params = {
         "prop": "imageinfo",
         "titles": f"File:{filename}",
