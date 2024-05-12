@@ -30,7 +30,6 @@ def get_merged_knowledge(query, target_language):
     st.success(_("English Wikipedia articles retrieved."))
 
 
-
 translations = load_translations('locales')
 
 if not 'target_language' in st.session_state:
