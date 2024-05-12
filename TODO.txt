@@ -1,0 +1,25 @@
+FINISHED - Search and Find Article on Wikipedia
+DONE, NOT USED - Optional: Look into the RAG Toolkit to use the Langchain Wikipedia Retriever based on a question
+- Optional: Let the user select if multiple articles are found
+FINISHED - Show Content section 1
+FINISHED - Optional: Image
+- Optional: Show Infobox
+FINISHED - Add button to load section 2,3,4 ...
+
+FINISHED - show content section 1
+
+FINISHED - Connect to Artic
+FINISHED - Make a translation of the content section 1
+FINISHED - Optional: Separate Text into 2-3 sentences and ask Artic to translate them separately. Maybe this will improve the translation quality.
+- Optional: Ask Artic to improve its own translation bevor giving it to the user.
+- Summarize (This classic must be included)
+- Combine Knowledge
+- Load article in different languages and ask Artic to create a unified version
+
+- Show Differences
+- Load arcticles and ask Artic to point out the difference between all that versions.
+
+- Optional: Instead using a fixed localization for the app, use the LLM to translate labels on demand and store them in cache.
+Meaning that we will never again have lost translation strings when a thing in the app has changes.
+Or Maybe a mixed use case, where it only translates and cache strings in the app not existing in the pre-defined localization files.
+

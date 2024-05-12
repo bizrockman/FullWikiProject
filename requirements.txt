@@ -1,0 +1,7 @@
+python-dotenv
+streamlit
+streamlit-extras
+wikipedia
+mwparserfromhell
+diskcache
+snowflake
