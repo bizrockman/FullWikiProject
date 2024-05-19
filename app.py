@@ -121,6 +121,9 @@ if query and st_button:
         st.session_state['original_query'] = query
         query = get_translation(query, 'en')
         st.session_state['translated_query'] = query
+    else:
+        st.session_state['original_query'] = None
+        st.session_state['translated_query'] = None
 
     with st.spinner(_("Getting Wikipedia article ...")):
         print("Searching Wikipedia for ", query)
