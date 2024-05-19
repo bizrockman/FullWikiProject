@@ -79,7 +79,6 @@ def set_rate_limiting(rate_limit, min_wait=timedelta(milliseconds=50)):
     RATE_LIMIT_LAST_CALL = None
 
 
-@cache
 def search(query, results=10, suggestion=False):
     """
       Do a Wikipedia search for `query`.
@@ -99,9 +98,9 @@ def search(query, results=10, suggestion=False):
     }
     if suggestion:
         search_params['srinfo'] = 'suggestion'
-
+    print("Current API URL: ", API_URL, " using query ", query  )
     raw_results = _wiki_request(search_params)
-
+    print(raw_results)
     if 'error' in raw_results:
         if raw_results['error']['info'] in ('HTTP request timed out.', 'Pool queue is full'):
             raise HTTPTimeoutError(query)
@@ -302,12 +301,15 @@ class WikipediaPage(object):
                 query_params['pageids'] = self.pageid
             else:
                 query_params['titles'] = self.title
+
             request = _wiki_request(query_params)
             html = request['query']['pages'][pageid]['revisions'][0]['*']
 
-            lis = BeautifulSoup("html").find_all('li')
+            lis = BeautifulSoup(html, features="html.parser").find_all('li')
             filtered_lis = [li for li in lis if not 'tocsection' in ''.join(li.get('class', []))]
             may_refer_to = [li.a.get_text() for li in filtered_lis if li.a]
+            #if may_refer_to[0]:
+            #    return WikipediaPage(may_refer_to[0], redirect=redirect, preload=preload)
 
             raise DisambiguationError(getattr(self, 'title', page['title']), may_refer_to)
 
@@ -334,11 +336,13 @@ class WikipediaPage(object):
                 query_params['titles'] = self.title
             else:
                 query_params['pageids'] = self.pageid
-
+            print(query_params)
             request = _wiki_request(query_params)
-            # print(request)
+
             self._extract = request['query']['pages'][0]['extract']
             self._content = request['query']['pages'][0]['revisions'][0]['slots']['main']['content']
+            print(request['query']['pages'][0].keys())
+            print(request['query']['pages'][0].get('pageimage'))
             self._image_name = request['query']['pages'][0]['pageimage']
 
     @property

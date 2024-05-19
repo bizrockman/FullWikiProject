@@ -2,32 +2,10 @@ import streamlit as st
 from streamlit_extras.buy_me_a_coffee import button as coffee_button
 
 import utils.wiki_utils as wiki_utils
-from utils.app_utils import wiki_search, get_sections, get_article_image, get_translation, get_summary, get_strong_summary
+from utils.app_utils import (wiki_search, get_sections, get_article_image,
+                             get_combined_knowledge_sections,
+                             get_translation, get_summary, get_strong_summary)
 from utils.localization import load_translations, set_language, _
-
-
-def get_merged_knowledge(query, target_language):
-    with st.spinner(_("Getting the German Wikipedia articles ...")):
-        translated_query = get_translation(query, 'de')
-        print("Searching German Wikipedia for ", translated_query)
-        german_wiki_page = wiki_search(query, target_language='de')
-    st.success(_("German Wikipedia articles retrieved."))
-    with st.spinner(_("Getting the French Wikipedia articles ...")):
-        print("Searching French Wikipedia for ", query)
-        french_wiki_page = wiki_search(query, target_language='fr')
-        st.success(_("French Wikipedia articles retrieved."))
-    with st.spinner(_("Getting the Spanish Wikipedia articles ...")):
-        print("Searching Spanish Wikipedia for ", query)
-        spanish_wiki_page = wiki_search(query, target_language='es')
-    st.success(_("Spanish Wikipedia articles retrieved."))
-    with st.spinner(_("Getting the Italian Wikipedia articles ...")):
-        print("Searching Italian Wikipedia for ", query)
-        italian_wiki_page = wiki_search(query, target_language='it')
-    st.success(_("Italian Wikipedia articles retrieved."))
-    with st.spinner(_("Getting the English Wikipedia articles ...")):
-        print("Searching English Wikipedia for ", query)
-        english_wiki_page = wiki_search(query, target_language='en')
-    st.success(_("English Wikipedia articles retrieved."))
 
 
 translations = load_translations('locales')
@@ -91,13 +69,13 @@ with st.sidebar:
     st.write("❷ ", _("Enter a search term"))
     st.write("❸ ", _("Hit Search"))
     st.write(
-             _("The most comprehensive English Wikipedia article will be retrieved and translated for you."))
+        _("The most comprehensive English Wikipedia article will be retrieved and translated for you."))
     st.divider()
     st.write(
         _("Vou wish to harness the combined knowledge of all major languages?"))
     st.write("✅ ", _("Check the 'Merge Knowledge' box."))
     st.write(_("This process may take some time, but you will be rewarded with a comprehensive article that integrates "
-             "knowledge from all major Wikipedia instances on the topic."))
+               "knowledge from all major Wikipedia instances on the topic."))
     st.divider()
     st.text(_("Created by:"))
     st.write("Danny Gerst")
@@ -105,7 +83,6 @@ with st.sidebar:
     st.write("[Twitter](https://twitter.com/gerstdanny/)")
     st.write("[Website](https://www.dannygerst.de/)")
     coffee_button(username="dannygerst", floating=False)
-
 
 # Hauptbereich für Suchfunktionen und Ergebnisse
 with st.container():
@@ -122,11 +99,11 @@ with st.container():
             index = 0
 
         target_language = st.selectbox(key="target_language", index=index,
-            label=_("Target Language"), options=codes, on_change=reset_section_position,
+                                       label=_("Target Language"), options=codes, on_change=reset_section_position,
                                        format_func=lambda code: labels[codes.index(code)])
 
     with col2:
-        merge_knowledge = st.checkbox(_("Merge Knowledge"))
+        merge_knowledge = st.checkbox(_("Merge Knowledge"), key="merge_knowledge")
 
     with st.form(key='my_form', border=False):
         col1, col2 = st.columns([3, 1])
@@ -143,14 +120,11 @@ if query and st_button:
     if 'target_language' in st.session_state and st.session_state['target_language'] != 'en':
         st.session_state['original_query'] = query
         query = get_translation(query, 'en')
-        st.session_state['trans_query'] = query
+        st.session_state['translated_query'] = query
 
-    if merge_knowledge:
-        wiki_page = get_merged_knowledge(query, target_language)
-    else:
-        with st.spinner(_("Getting Wikipedia article ...")):
-            print("Searching Wikipedia for ", query)
-            wiki_page = wiki_search(query)
+    with st.spinner(_("Getting Wikipedia article ...")):
+        print("Searching Wikipedia for ", query)
+        wiki_page = wiki_search(query)
 
     st.session_state['wiki_page'] = wiki_page
     st.session_state['read_to_section'] = 1
@@ -168,19 +142,18 @@ if 'next_section_btn' in st.session_state and st.session_state.next_section_btn:
 if wiki_page and isinstance(wiki_page, wiki_utils.WikipediaPage):
     if 'original_query' in st.session_state:
         original_query = st.session_state['original_query']
-        trans_query = st.session_state['trans_query']
-        st.header(f"{original_query} => {trans_query}")
+        translated_query = st.session_state['translated_query']
+        st.header(f"{original_query} => {translated_query}")
     else:
         st.header(query)
-    st.write(f"[Wikipedia]({wiki_page.url})")
+
     extract = wiki_page.extract
     infobox = wiki_page.infobox
 
-    image_filename = None
-    if infobox:
+    image_filename = wiki_page.image_name
+
+    if not image_filename and infobox:
         image_filename = infobox.get('image')
-    if not image_filename:
-        image_filename = wiki_page.image_name
     image_html = get_article_image(image_filename)
 
     if 'summary_btn' in st.session_state and st.session_state.summary_btn:
@@ -208,20 +181,35 @@ if wiki_page and isinstance(wiki_page, wiki_utils.WikipediaPage):
         st.write(_("Strong Summary"))
         st.markdown(strong_summary, unsafe_allow_html=True)
     else:
-        with st.spinner(_("Translating Wikipedia article ...")):
-            print("Retrieving Section ", st.session_state['read_to_section'])
-            sections = get_sections(extract, st.session_state['read_to_section'], target_language, image_html=image_html)
+        if 'merge_knowledge' in st.session_state and st.session_state['merge_knowledge']:
+            log_area = st.empty()
+            with st.spinner(_("Merging Knowledge ... (3-5 minutes)")):
+                urls, sections = get_combined_knowledge_sections(log_area, wiki_page, query,
+                                                                 target_language, st.session_state['read_to_section'],
+                                                                 image_html=image_html)
+            log_area.empty()
+            links = ""
+            for key, value in urls.items():
+                links += f"[Wikipedia {key}]({value})&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+            st.write(links)
 
-        st.markdown(sections, unsafe_allow_html=True)
+            st.markdown(sections, unsafe_allow_html=True)
+        else:
+            st.write(f"[Wikipedia]({wiki_page.url})")
+            with st.spinner(_("Translating Wikipedia article ...")):
+                print("Retrieving Section ", st.session_state['read_to_section'])
+                sections = get_sections(extract, st.session_state['read_to_section'], target_language,
+                                        image_html=image_html)
 
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-            # TODO only show if section to read is smaller that the number of sections
-            next_section_btn = st.button(_("Next Section"), key="next_section_btn")
-        with col3:
-            summary_btn = st.button(_("Summary"), key="summary_btn")
-            st.write(f'<p style="font-size:0.8rem; padding-left: 5px; margin-top: -8px; color: lightblue">'
-                     f'{_("Takes a while until finished")}</p>', unsafe_allow_html=True)
+            st.markdown(sections, unsafe_allow_html=True)
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col1:
+                # TODO only show if section to read is smaller that the number of sections
+                next_section_btn = st.button(_("Next Section"), key="next_section_btn")
+            with col3:
+                summary_btn = st.button(_("Summary"), key="summary_btn")
+                st.write(f'<p style="font-size:0.8rem; padding-left: 5px; margin-top: -8px; color: lightblue">'
+                         f'{_("Takes a while until finished")}</p>', unsafe_allow_html=True)
 else:
     st.header(_("Please enter a search query to get started."))
-
