@@ -42,8 +42,7 @@ div[data-testid="column"]:nth-of-type(2)
 div[data-testid="column"]:nth-of-type(3)
 {
     display: flex;
-    justify-content: flex-end;
-    color: #f0f0f0;
+    justify-content: flex-end;    
 }
 div .stButton {
     min-width: 120px;
@@ -214,7 +213,7 @@ if wiki_page and isinstance(wiki_page, wiki_utils.WikipediaPage):
                 next_section_btn = st.button(_("Next Section"), key="next_section_btn")
             with col3:
                 summary_btn = st.button(_("Summary"), key="summary_btn")
-                st.write(f'<p style="font-size:0.8rem; padding-left: 5px; margin-top: -8px; color: lightblue">'
+                st.write(f'<p style="font-size:0.8rem; padding-left: 5px; margin-top: -8px; color: blue">'
                          f'{_("Takes a while until finished")}</p>', unsafe_allow_html=True)
 else:
     st.header(_("Please enter a search query to get started."))
