@@ -343,7 +343,8 @@ class WikipediaPage(object):
             self._content = request['query']['pages'][0]['revisions'][0]['slots']['main']['content']
             print(request['query']['pages'][0].keys())
             print(request['query']['pages'][0].get('pageimage'))
-            self._image_name = request['query']['pages'][0]['pageimage']
+            if 'pageimage' in request['query']['pages'][0]:
+                self._image_name = request['query']['pages'][0]['pageimage']
 
     @property
     def content(self):
